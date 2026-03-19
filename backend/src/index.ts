@@ -3,7 +3,10 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import { Prisma } from "@prisma/client";
 import authRouter from "./modules/auth/auth.router";
+import tasksRouter from "./modules/tasks/tasks.router";
+import tagsRouter from "./modules/tags/tags.router";
 
 dotenv.config();
 
@@ -30,6 +33,8 @@ app.get("/health", (_req: Request, res: Response) => {
 
 // API routes
 app.use("/api/auth", authRouter);
+app.use("/api/tasks", tasksRouter);
+app.use("/api/tags", tagsRouter);
 
 // Root API endpoint
 app.get("/api", (_req: Request, res: Response) => {
@@ -40,6 +45,32 @@ app.get("/api", (_req: Request, res: Response) => {
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error("Error:", err);
 
+  // Handle Prisma errors
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    // Unique constraint violation
+    if (err.code === "P2002") {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: "CONFLICT",
+          message: "A record with this value already exists",
+        },
+      });
+    }
+
+    // Record not found
+    if (err.code === "P2025") {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Record not found",
+        },
+      });
+    }
+  }
+
+  // Default error response
   res.status(500).json({
     success: false,
     error: {

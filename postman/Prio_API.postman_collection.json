@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Prio API",
-    "description": "Prio Task Management API - Phase 2 Auth Endpoints",
+    "description": "Prio Task Management API - Complete Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -196,6 +196,382 @@
         }
       ],
       "description": "Authentication endpoints"
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Get Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?page=1&limit=20&sort=created_at&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "created_at",
+                  "description": "created_at | due_date | priority | title"
+                },
+                {
+                  "key": "order",
+                  "value": "desc",
+                  "description": "asc | desc"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "view",
+                  "value": "all",
+                  "description": "all | today | upcoming | overdue | done",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "High",
+                  "description": "High | Medium | Low",
+                  "disabled": true
+                },
+                {
+                  "key": "tag",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "ดึง tasks ทั้งหมดพร้อม filter, search, sort, pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Task\",\n  \"description\": \"Task description\",\n  \"priority\": \"High\",\n  \"dueDate\": \"2026-03-25T10:00:00Z\",\n  \"tagIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            },
+            "description": "สร้าง task ใหม่"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Task Title\",\n  \"description\": \"Updated description\",\n  \"priority\": \"Medium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1"]
+            },
+            "description": "อัปเดต task (ทุก field optional)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1"]
+            },
+            "description": "ลบ task"
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Task Done",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1/done",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1", "done"]
+            },
+            "description": "Toggle isDone status"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task Position",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1", "position"]
+            },
+            "description": "อัปเดต position สำหรับ drag & drop"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Mark Done",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskIds\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/bulk/done",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "bulk", "done"]
+            },
+            "description": "Mark หลาย tasks เป็น done พร้อมกัน"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskIds\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "bulk"]
+            },
+            "description": "ลบหลาย tasks พร้อมกัน"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Subtask",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Subtask\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1/subtasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1", "subtasks"]
+            },
+            "description": "เพิ่ม subtask ให้ task"
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Subtask Done",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1/subtasks/1/done",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1", "subtasks", "1", "done"]
+            },
+            "description": "Toggle subtask isDone"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Subtask",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/1/subtasks/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "1", "subtasks", "1"]
+            },
+            "description": "ลบ subtask"
+          },
+          "response": []
+        }
+      ],
+      "description": "Task management endpoints"
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "Get Tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tags"]
+            },
+            "description": "ดึง tags ทั้งหมดพร้อมนับจำนวน tasks"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Work\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tags"]
+            },
+            "description": "สร้าง tag ใหม่"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tags/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tags", "1"]
+            },
+            "description": "ลบ tag"
+          },
+          "response": []
+        }
+      ],
+      "description": "Tag management endpoints"
     },
     {
       "name": "Health Check",

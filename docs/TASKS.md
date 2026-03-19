@@ -249,7 +249,7 @@
 
 ### 3.1 Task Schemas (Zod)
 
-- [ ] **เขียน `schemas/task.schema.ts`**
+- [x] **เขียน `schemas/task.schema.ts`**
   - `createTaskSchema`: title (required), description, priority, dueDate, tagIds[]
   - `updateTaskSchema`: ทุก field optional (partial)
   - `bulkSchema`: taskIds (array of numbers, min 1)
@@ -259,7 +259,7 @@
 
 ### 3.2 Task Service
 
-- [ ] **เขียน `modules/tasks/tasks.service.ts`**
+- [x] **เขียน `modules/tasks/tasks.service.ts`**
   - `getTasks(userId, query)`:
     - build WHERE clause จาก query params
     - handle view: today, upcoming, overdue, done, all
@@ -285,7 +285,7 @@
 
 ### 3.3 Subtask Service
 
-- [ ] **เขียน subtask methods** (ใน tasks.service.ts หรือแยก)
+- [x] **เขียน subtask methods** (ใน tasks.service.ts หรือแยก)
   - `addSubtask(userId, taskId, title)` — verify task ownership ก่อน
   - `toggleSubtask(userId, subtaskId)` — verify ผ่าน task.userId
   - `deleteSubtask(userId, subtaskId)` — verify ผ่าน task.userId
@@ -294,7 +294,7 @@
 
 ### 3.4 Tag Service
 
-- [ ] **เขียน `modules/tags/tags.service.ts`**
+- [x] **เขียน `modules/tags/tags.service.ts`**
   - `getTags(userId)` — include `_count: { taskTags: true }`
   - `createTag(userId, name)` — ตรวจชื่อซ้ำ
   - `deleteTag(userId, tagId)` — verify ownership
@@ -303,18 +303,18 @@
 
 ### 3.5 Controllers & Routers
 
-- [ ] **เขียน `modules/tasks/tasks.controller.ts`**
-- [ ] **เขียน `modules/tasks/tasks.router.ts`**
+- [x] **เขียน `modules/tasks/tasks.controller.ts`**
+- [x] **เขียน `modules/tasks/tasks.router.ts`**
   - ทุก route ผ่าน `auth middleware`
   - PATCH `/bulk/done` และ DELETE `/bulk` ต้องมาก่อน `/:id`
-- [ ] **เขียน tags router + controller**
-- [ ] **ลงทะเบียน routers** ใน `src/index.ts`
+- [x] **เขียน tags router + controller**
+- [x] **ลงทะเบียน routers** ใน `src/index.ts`
 
 ---
 
 ### 3.6 Global Error Handler
 
-- [ ] **เขียน error middleware** ใน `src/index.ts`
+- [x] **เขียน error middleware** ใน `src/index.ts`
   - format: `{ success: false, error: { code, message } }`
   - handle Prisma errors (P2002, P2025)
   - handle Zod errors
@@ -324,12 +324,12 @@
 
 ### 3.7 ทดสอบ Tasks API
 
-- [ ] CRUD ครบด้วย Postman / curl
-- [ ] filter: view=today, overdue, search=keyword
-- [ ] sort: due_date, priority
-- [ ] bulk: mark done + delete
-- [ ] ownership: user A ไม่แก้ task ของ user B (403)
-- [ ] subtasks: add, toggle, delete
+- [x] CRUD ครบด้วย Postman / curl
+- [x] filter: view=today, overdue, search=keyword
+- [x] sort: due_date, priority
+- [x] bulk: mark done + delete
+- [x] ownership: user A ไม่แก้ task ของ user B (403)
+- [x] subtasks: add, toggle, delete
 
 ---
 
@@ -605,12 +605,12 @@
 | 0 — Setup     | 15      | 15     | 🟢     |
 | 1 — Database  | 10      | 10     | 🟢     |
 | 2 — Auth API  | 17      | 17     | �      |
-| 3 — Tasks API | 19      | 0      | 🔴     |
+| 3 — Tasks API | 19      | 19     | �      |
 | 4 — Frontend  | 30      | 0      | 🔴     |
 | 5 — Connect   | 28      | 0      | 🔴     |
 | 6 — Deploy    | 13      | 0      | 🔴     |
-| **Total**     | **132** | **42** | 🟡     |
+| **Total**     | **132** | **61** | 🟡     |
 
 ---
 
-_อัปเดตล่าสุด: 2025-03-20 | Phase 0: 15/15 ✅ | Phase 1: 10/10 ✅ | Phase 2: 17/17 ✅_
+_อัปเดตล่าสุด: 2025-03-20 | Phase 0: 15/15 ✅ | Phase 1: 10/10 ✅ | Phase 2: 17/17 ✅ | Phase 3: 19/19 ✅_
