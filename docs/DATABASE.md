@@ -3,7 +3,7 @@
 ## Prisma Schema (เต็ม)
 
 ```prisma
-// backend/prisma/schema.prisma
+// prio/backend/prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -43,7 +43,7 @@ model Task {
   priority    Priority  @default(Medium)
   dueDate     DateTime? @map("due_date")
   isDone      Boolean   @default(false) @map("is_done")
-  position    Int       @default(0)     // สำหรับ drag & drop order
+  position    Int       @default(0)
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -136,24 +136,24 @@ enum Priority {
 ## ER Diagram (Text)
 
 ```
-users (1) ──────────────────── (N) tasks
-  id                                 id
-  name                               user_id ──► users.id
-  email                              title
-  password_hash                      description
-                                     priority
-                                     due_date
-                                     is_done
-                                     position
+users (1) ──────────────────────── (N) tasks
+  id                                     id
+  name                                   user_id ──► users.id
+  email                                  title
+  password_hash                          description
+                                         priority
+                                         due_date
+                                         is_done
+                                         position
 
-tasks (1) ──────────────────── (N) subtasks
-                                     id
-                                     task_id ──► tasks.id
-                                     title
-                                     is_done
-                                     position
+tasks (1) ──────────────────────── (N) subtasks
+                                         id
+                                         task_id ──► tasks.id
+                                         title
+                                         is_done
+                                         position
 
-tasks (N) ──── task_tags ──── (N) tags
+tasks (N) ───── task_tags ───── (N) tags
                   task_id              id
                   tag_id               user_id ──► users.id
                                        name
@@ -164,20 +164,23 @@ tasks (N) ──── task_tags ──── (N) tags
 ## Migration Commands
 
 ```bash
-# สร้าง migration ใหม่ (ครั้งแรก)
+# สร้าง migration ครั้งแรก
 npx prisma migrate dev --name init
 
 # สร้าง migration หลัง schema เปลี่ยน
-npx prisma migrate dev --name add_position_to_tasks
+npx prisma migrate dev --name add_subtasks
 
-# Apply migration บน production
+# Apply บน production
 npx prisma migrate deploy
 
-# Reset database (⚠️ ลบข้อมูลทั้งหมด — dev only)
+# Reset (⚠️ ลบข้อมูลทั้งหมด — dev only)
 npx prisma migrate reset
 
 # Generate Prisma Client หลังแก้ schema
 npx prisma generate
+
+# เปิด GUI ตรวจ data
+npx prisma studio
 ```
 
 ---
@@ -185,7 +188,7 @@ npx prisma generate
 ## Seed Data
 
 ```typescript
-// backend/prisma/seed.ts
+// prio/backend/prisma/seed.ts
 import { PrismaClient, Priority } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
@@ -196,8 +199,8 @@ async function main() {
 
   const user = await prisma.user.create({
     data: {
-      name: 'ภูมิ สมชาย',
-      email: 'demo@taski.app',
+      name: 'Demo User',
+      email: 'demo@prio.app',
       passwordHash: hash,
     },
   })
@@ -209,20 +212,42 @@ async function main() {
   await prisma.task.create({
     data: {
       userId: user.id,
-      title: 'ส่งรายงาน Q3 ให้หัวหน้า',
+      title: 'ส่งรายงาน Q3',
+      description: 'รวมยอดขายรายไตรมาสและส่ง PDF',
       priority: Priority.High,
       dueDate: new Date('2025-03-22'),
       taskTags: { create: [{ tagId: tagWork.id }] },
       subtasks: {
         create: [
-          { title: 'รวบรวมข้อมูล', isDone: true },
-          { title: 'สร้าง Slide', isDone: false },
+          { title: 'รวบรวมข้อมูล', isDone: true,  position: 0 },
+          { title: 'สร้าง Slide',   isDone: false, position: 1 },
+          { title: 'ส่งอีเมล',      isDone: false, position: 2 },
         ],
       },
     },
   })
 
-  console.log('✅ Seed complete')
+  await prisma.task.create({
+    data: {
+      userId: user.id,
+      title: 'Review Pull Request #42',
+      priority: Priority.Medium,
+      dueDate: new Date('2025-03-25'),
+      taskTags: { create: [{ tagId: tagDev.id }] },
+    },
+  })
+
+  await prisma.task.create({
+    data: {
+      userId: user.id,
+      title: 'ออกแบบ Wireframe Dashboard',
+      priority: Priority.Low,
+      dueDate: new Date('2025-03-30'),
+      taskTags: { create: [{ tagId: tagDesign.id }, { tagId: tagWork.id }] },
+    },
+  })
+
+  console.log('✅ Seed complete — demo@prio.app / password123')
 }
 
 main()
@@ -246,10 +271,7 @@ main()
 ```typescript
 // ดึง tasks ของ user พร้อม tags และ subtasks
 const tasks = await prisma.task.findMany({
-  where: {
-    userId: req.userId,
-    isDone: false,
-  },
+  where: { userId: req.userId, isDone: false },
   include: {
     taskTags: { include: { tag: true } },
     subtasks: { orderBy: { position: 'asc' } },
@@ -257,25 +279,35 @@ const tasks = await prisma.task.findMany({
   orderBy: { createdAt: 'desc' },
 })
 
-// Filter หลายเงื่อนไข
-const tasks = await prisma.task.findMany({
+// Filter หลายเงื่อนไข (view = today)
+const today = new Date()
+today.setHours(0, 0, 0, 0)
+const tomorrow = new Date(today)
+tomorrow.setDate(tomorrow.getDate() + 1)
+
+const todayTasks = await prisma.task.findMany({
   where: {
     userId: req.userId,
-    AND: [
-      search ? { title: { contains: search, mode: 'insensitive' } } : {},
-      priority ? { priority } : {},
-      isDone !== undefined ? { isDone } : {},
-    ],
+    isDone: false,
+    dueDate: { gte: today, lt: tomorrow },
   },
 })
 
-// Bulk update
+// Bulk update (ต้องตรวจ ownership เสมอ)
 await prisma.task.updateMany({
   where: {
     id: { in: taskIds },
-    userId: req.userId,   // ← สำคัญ: user ต้องเป็นเจ้าของ
+    userId: req.userId,   // ← สำคัญมาก
   },
   data: { isDone: true },
+})
+
+// Bulk delete
+await prisma.task.deleteMany({
+  where: {
+    id: { in: taskIds },
+    userId: req.userId,
+  },
 })
 ```
 
@@ -288,6 +320,7 @@ await prisma.task.updateMany({
 | tasks | `user_id` | ทุก query filter ด้วย user |
 | tasks | `user_id, is_done` | filter view done/active |
 | tasks | `user_id, due_date` | filter today/upcoming/overdue |
+| subtasks | `task_id` | load subtasks ตาม task |
 | tags | `user_id` | load tags ของ user |
 | refresh_tokens | `user_id` | lookup token เร็ว |
 

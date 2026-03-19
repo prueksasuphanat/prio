@@ -1,8 +1,8 @@
 # 📡 API.md — API Reference
 
 > **Base URL (dev):** `http://localhost:3000/api`
-> **Base URL (prod):** `https://taski-api.railway.app/api`
-> **Auth:** Bearer Token in `Authorization` header
+> **Base URL (prod):** `https://prio-api.railway.app/api`
+> **Auth:** Bearer Token ใน `Authorization` header
 
 ---
 
@@ -38,7 +38,6 @@
 ## 🔐 Auth Endpoints
 
 ### POST `/auth/register`
-สมัครสมาชิกใหม่
 
 **Body**
 ```json
@@ -62,7 +61,6 @@
 ---
 
 ### POST `/auth/login`
-เข้าสู่ระบบ
 
 **Body**
 ```json
@@ -82,12 +80,11 @@
   }
 }
 ```
-> ⚠️ `refresh_token` ส่งกลับมาใน `HttpOnly Cookie` ไม่ใช่ body
+> ⚠️ `refresh_token` ส่งกลับมาใน `HttpOnly Cookie` — ไม่ปรากฏใน body
 
 ---
 
 ### POST `/auth/refresh`
-แลก refresh token เอา access token ใหม่
 
 **Cookie (อัตโนมัติ):** `refresh_token=xxx`
 
@@ -102,7 +99,6 @@
 ---
 
 ### POST `/auth/logout`
-ออกจากระบบ (revoke refresh token)
 
 **Headers:** `Authorization: Bearer <token>`
 
@@ -120,7 +116,6 @@
 ---
 
 ### GET `/tasks`
-ดึง tasks ของ user พร้อม filter/sort
 
 **Query Params**
 
@@ -151,7 +146,7 @@
       "createdAt": "2025-03-15T10:00:00.000Z",
       "tags": [{ "id": 1, "name": "Work" }],
       "subtasks": [
-        { "id": 101, "title": "รวบรวมข้อมูล", "isDone": true }
+        { "id": 101, "title": "รวบรวมข้อมูล", "isDone": true, "position": 0 }
       ]
     }
   ],
@@ -162,7 +157,6 @@
 ---
 
 ### POST `/tasks`
-สร้างงานใหม่
 
 **Body**
 ```json
@@ -180,7 +174,6 @@
 ---
 
 ### PATCH `/tasks/:id`
-แก้ไขงาน (partial update)
 
 **Body** — field ไหนก็ได้ที่อยากแก้
 ```json
@@ -195,7 +188,6 @@
 ---
 
 ### DELETE `/tasks/:id`
-ลบงาน
 
 **Response 200**
 ```json
@@ -205,7 +197,6 @@
 ---
 
 ### PATCH `/tasks/:id/done`
-Toggle สถานะ done/not done
 
 **Response 200**
 ```json
@@ -218,17 +209,20 @@ Toggle สถานะ done/not done
 ---
 
 ### PATCH `/tasks/:id/position`
-อัปเดตตำแหน่ง (drag & drop)
 
 **Body**
 ```json
 { "position": 2 }
 ```
 
+**Response 200**
+```json
+{ "success": true }
+```
+
 ---
 
 ### PATCH `/tasks/bulk/done`
-Mark หลายงานว่าเสร็จพร้อมกัน
 
 **Body**
 ```json
@@ -246,7 +240,6 @@ Mark หลายงานว่าเสร็จพร้อมกัน
 ---
 
 ### DELETE `/tasks/bulk`
-ลบหลายงานพร้อมกัน
 
 **Body**
 ```json
@@ -263,18 +256,58 @@ Mark หลายงานว่าเสร็จพร้อมกัน
 
 ---
 
+## 🧩 Subtasks Endpoints
+
+### POST `/tasks/:id/subtasks`
+
+**Body**
+```json
+{ "title": "รวบรวมข้อมูล" }
+```
+
+**Response 201**
+```json
+{
+  "success": true,
+  "data": { "id": 101, "title": "รวบรวมข้อมูล", "isDone": false, "position": 0 }
+}
+```
+
+---
+
+### PATCH `/tasks/:id/subtasks/:subtaskId/done`
+
+**Response 200**
+```json
+{
+  "success": true,
+  "data": { "id": 101, "isDone": true }
+}
+```
+
+---
+
+### DELETE `/tasks/:id/subtasks/:subtaskId`
+
+**Response 200**
+```json
+{ "success": true }
+```
+
+---
+
 ## 🏷️ Tags Endpoints
 
 ### GET `/tags`
-ดึง tags ทั้งหมดของ user
 
 **Response 200**
 ```json
 {
   "success": true,
   "data": [
-    { "id": 1, "name": "Work", "taskCount": 3 },
-    { "id": 2, "name": "Dev",  "taskCount": 2 }
+    { "id": 1, "name": "Work",   "taskCount": 3 },
+    { "id": 2, "name": "Dev",    "taskCount": 2 },
+    { "id": 3, "name": "Design", "taskCount": 1 }
   ]
 }
 ```
@@ -282,7 +315,6 @@ Mark หลายงานว่าเสร็จพร้อมกัน
 ---
 
 ### POST `/tags`
-สร้าง tag ใหม่
 
 **Body**
 ```json
@@ -300,7 +332,6 @@ Mark หลายงานว่าเสร็จพร้อมกัน
 ---
 
 ### DELETE `/tags/:id`
-ลบ tag (task ที่ใช้ tag นี้จะหลุด tag ออกไปอัตโนมัติ)
 
 **Response 200**
 ```json
@@ -317,7 +348,7 @@ Mark หลายงานว่าเสร็จพร้อมกัน
 | `UNAUTHORIZED` | 401 | ไม่มี / token หมดอายุ |
 | `FORBIDDEN` | 403 | ไม่ใช่เจ้าของ resource |
 | `NOT_FOUND` | 404 | หา resource ไม่เจอ |
-| `CONFLICT` | 409 | ข้อมูลซ้ำ (เช่น email) |
+| `CONFLICT` | 409 | ข้อมูลซ้ำ (เช่น email ซ้ำ) |
 | `RATE_LIMIT` | 429 | เรียก API บ่อยเกิน |
 | `SERVER_ERROR` | 500 | internal error |
 
