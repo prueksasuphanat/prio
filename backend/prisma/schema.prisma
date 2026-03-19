@@ -7,4 +7,118 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Models will be added in Phase 1
+// ─────────────────────────────
+// ENUMS
+// ─────────────────────────────
+enum Priority {
+  High
+  Medium
+  Low
+}
+
+// ─────────────────────────────
+// USERS
+// ─────────────────────────────
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tasks         Task[]
+  tags          Tag[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────
+// TASKS
+// ─────────────────────────────
+model Task {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  title       String
+  description String?
+  priority    Priority  @default(Medium)
+  dueDate     DateTime? @map("due_date")
+  isDone      Boolean   @default(false) @map("is_done")
+  position    Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskTags    TaskTag[]
+  subtasks    Subtask[]
+
+  @@index([userId])
+  @@index([userId, isDone])
+  @@index([userId, dueDate])
+  @@map("tasks")
+}
+
+// ─────────────────────────────
+// SUBTASKS
+// ─────────────────────────────
+model Subtask {
+  id        Int      @id @default(autoincrement())
+  taskId    Int      @map("task_id")
+  title     String
+  isDone    Boolean  @default(false) @map("is_done")
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("subtasks")
+}
+
+// ─────────────────────────────
+// TAGS
+// ─────────────────────────────
+model Tag {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskTags  TaskTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+// ─────────────────────────────
+// TASK_TAGS (Junction)
+// ─────────────────────────────
+model TaskTag {
+  taskId Int  @map("task_id")
+  tagId  Int  @map("tag_id")
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@map("task_tags")
+}
+
+// ─────────────────────────────
+// REFRESH TOKENS
+// ─────────────────────────────
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}

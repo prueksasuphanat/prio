@@ -48,7 +48,7 @@
   - `VITE_API_URL=http://localhost:3000/api`
 - [x] **เขียน `frontend/.env.example`**
   - template ไม่มีค่าจริง — commit ขึ้น git ได้
-- [ ] **ทดสอบ:** `npm run dev` → เห็นหน้าเว็บที่ `localhost:5173`
+- [x] **ทดสอบ:** `npm run dev` → เห็นหน้าเว็บที่ `localhost:5173`
 
 ---
 
@@ -81,7 +81,7 @@
   - route ทดสอบ: `GET /health → { status: "ok" }`
 - [x] **เพิ่ม npm scripts**
   - `"dev": "ts-node-dev src/index.ts"`, `"build": "tsc"`, `"start": "node dist/index.js"`
-- [ ] **ทดสอบ:** `npm run dev` → `curl localhost:3000/health` ได้ `{ status: "ok" }`
+- [x] **ทดสอบ:** `npm run dev` → `curl localhost:3000/health` ได้ `{ status: "ok" }`
 
 ---
 
@@ -91,7 +91,7 @@
   - `npm i prisma @prisma/client` + `npx prisma init`
 - [x] **ตั้งค่า DATABASE_URL** ใน `.env`
   - ใช้ local PostgreSQL หรือ Supabase free tier
-- [ ] **ทดสอบ connection:** `npx prisma migrate dev --name test`
+- [x] **ทดสอบ connection:** `npx prisma migrate dev --name test`
 
 ---
 
@@ -103,44 +103,44 @@
 
 ### 1.1 เขียน Prisma Schema
 
-- [ ] **เขียน model `User`**
+- [x] **เขียน model `User`**
   - fields: `id, name, email, passwordHash, createdAt, updatedAt`
   - constraint: `email @unique`
-- [ ] **เขียน model `Task`**
+- [x] **เขียน model `Task`**
   - fields: `id, userId, title, description, priority, dueDate, isDone, position, createdAt, updatedAt`
   - relation: `userId → User` (onDelete: Cascade)
   - indexes: `@@index([userId])`, `@@index([userId, isDone])`, `@@index([userId, dueDate])`
-- [ ] **เขียน model `Subtask`**
+- [x] **เขียน model `Subtask`**
   - fields: `id, taskId, title, isDone, position, createdAt`
   - relation: `taskId → Task` (onDelete: Cascade)
-- [ ] **เขียน model `Tag`**
+- [x] **เขียน model `Tag`**
   - fields: `id, userId, name, createdAt`
   - constraint: `@@unique([userId, name])`
-- [ ] **เขียน model `TaskTag`** (junction)
+- [x] **เขียน model `TaskTag`** (junction)
   - composite key: `@@id([taskId, tagId])`
   - onDelete: Cascade ทั้งสองฝั่ง
-- [ ] **เขียน model `RefreshToken`**
+- [x] **เขียน model `RefreshToken`**
   - fields: `id, userId, token, expiresAt, createdAt`
   - constraint: `token @unique`
-- [ ] **เพิ่ม enum `Priority`**
+- [x] **เพิ่ม enum `Priority`**
   - values: `High, Medium, Low`
 
 ---
 
 ### 1.2 Migration & Generate
 
-- [ ] **Run migration**
+- [x] **Run migration**
   - `npx prisma migrate dev --name init`
-- [ ] **Generate Prisma Client**
+- [x] **Generate Prisma Client**
   - `npx prisma generate`
-- [ ] **ตรวจสอบด้วย Prisma Studio**
+- [x] **ตรวจสอบด้วย Prisma Studio**
   - `npx prisma studio` → เช็กว่า tables ครบและ schema ถูก
 
 ---
 
 ### 1.3 Prisma Client Setup
 
-- [ ] **สร้าง `src/config/prisma.ts`**
+- [x] **สร้าง `src/config/prisma.ts`**
   - export singleton `PrismaClient` instance
   - จัดการ graceful shutdown (`$disconnect`)
 
@@ -148,12 +148,12 @@
 
 ### 1.4 Seed Data
 
-- [ ] **เขียน `prisma/seed.ts`**
+- [x] **เขียน `prisma/seed.ts`**
   - สร้าง demo user: `demo@prio.app` / `password123`
   - สร้าง tasks + tags ตัวอย่าง
-- [ ] **เพิ่ม seed script** ใน `package.json`
+- [x] **เพิ่ม seed script** ใน `package.json`
   - `"prisma": { "seed": "ts-node prisma/seed.ts" }`
-- [ ] **ทดสอบ:** `npx prisma db seed` → เห็นข้อมูลใน Prisma Studio
+- [x] **ทดสอบ:** `npx prisma db seed` → เห็นข้อมูลใน Prisma Studio
 
 ---
 
@@ -165,10 +165,10 @@
 
 ### 2.1 Utilities
 
-- [ ] **เขียน `utils/hash.ts`**
+- [x] **เขียน `utils/hash.ts`**
   - `hashPassword(password)` — bcrypt hash (rounds: 12)
   - `comparePassword(password, hash)` — bcrypt compare
-- [ ] **เขียน `utils/jwt.ts`**
+- [x] **เขียน `utils/jwt.ts`**
   - `signAccessToken(userId)` — expire 15m
   - `signRefreshToken(userId)` — expire 7d
   - `verifyAccessToken(token)` → payload หรือ throw
@@ -178,7 +178,7 @@
 
 ### 2.2 Schemas (Zod)
 
-- [ ] **เขียน `schemas/auth.schema.ts`**
+- [x] **เขียน `schemas/auth.schema.ts`**
   - `registerSchema`: name (min 1), email (valid), password (min 8)
   - `loginSchema`: email, password
 
@@ -186,14 +186,14 @@
 
 ### 2.3 Middleware
 
-- [ ] **เขียน `middleware/validate.ts`**
+- [x] **เขียน `middleware/validate.ts`**
   - รับ Zod schema → validate `req.body`
   - ถ้าไม่ผ่าน → return 400 + error details
-- [ ] **เขียน `middleware/auth.ts`**
+- [x] **เขียน `middleware/auth.ts`**
   - ดึง token จาก `Authorization: Bearer <token>`
   - verify → ใส่ `req.userId`
   - ถ้า token หมดอายุหรือผิด → return 401
-- [ ] **เขียน `middleware/rateLimit.ts`**
+- [x] **เขียน `middleware/rateLimit.ts`**
   - `authLimiter`: 10 req / 15 min (login/register)
   - `generalLimiter`: 100 req / 15 min
 
@@ -201,7 +201,7 @@
 
 ### 2.4 Auth Module
 
-- [ ] **เขียน `modules/auth/auth.service.ts`**
+- [x] **เขียน `modules/auth/auth.service.ts`**
   - `register(name, email, password)`:
     - ตรวจ email ซ้ำ → throw 409 ถ้าซ้ำ
     - hash password → สร้าง user
@@ -216,28 +216,28 @@
     - สร้าง access token ใหม่
   - `logout(token)`:
     - ลบ refresh token จาก DB
-- [ ] **เขียน `modules/auth/auth.controller.ts`**
+- [x] **เขียน `modules/auth/auth.controller.ts`**
   - `register` → return 201
   - `login` → ตั้ง httpOnly cookie + return 200
   - `refresh` → อ่าน cookie → return 200
   - `logout` → อ่าน cookie → clear cookie → return 200
-- [ ] **เขียน `modules/auth/auth.router.ts`**
+- [x] **เขียน `modules/auth/auth.router.ts`**
   - POST `/register` → validate → controller
   - POST `/login` → validate + rateLimit → controller
   - POST `/refresh` → controller
   - POST `/logout` → auth → controller
-- [ ] **ลงทะเบียน router** ใน `src/index.ts`
+- [x] **ลงทะเบียน router** ใน `src/index.ts`
 
 ---
 
 ### 2.5 ทดสอบ Auth
 
-- [ ] register ได้ + password ถูก hash
-- [ ] login ได้ access token + refresh token ใน cookie
-- [ ] endpoint ที่ต้อง auth → reject ถ้าไม่มี token (401)
-- [ ] refresh token ใช้แลกได้
-- [ ] logout → cookie หาย + token ใน DB ลบแล้ว
-- [ ] email ซ้ำ → 409
+- [x] register ได้ + password ถูก hash
+- [x] login ได้ access token + refresh token ใน cookie
+- [x] endpoint ที่ต้อง auth → reject ถ้าไม่มี token (401)
+- [x] refresh token ใช้แลกได้
+- [x] logout → cookie หาย + token ใน DB ลบแล้ว
+- [x] email ซ้ำ → 409
 
 ---
 
@@ -602,15 +602,15 @@
 
 | Phase         | Tasks   | Done   | Status |
 | ------------- | ------- | ------ | ------ |
-| 0 — Setup     | 15      | 12     | 🟡     |
-| 1 — Database  | 10      | 0      | 🔴     |
-| 2 — Auth API  | 17      | 0      | 🔴     |
+| 0 — Setup     | 15      | 15     | 🟢     |
+| 1 — Database  | 10      | 10     | 🟢     |
+| 2 — Auth API  | 17      | 17     | �      |
 | 3 — Tasks API | 19      | 0      | 🔴     |
 | 4 — Frontend  | 30      | 0      | 🔴     |
 | 5 — Connect   | 28      | 0      | 🔴     |
 | 6 — Deploy    | 13      | 0      | 🔴     |
-| **Total**     | **132** | **12** | 🟡     |
+| **Total**     | **132** | **42** | 🟡     |
 
 ---
 
-_อัปเดตล่าสุด: 2025-03-19 | Phase 0: 12/15 tasks complete (80%)_
+_อัปเดตล่าสุด: 2025-03-20 | Phase 0: 15/15 ✅ | Phase 1: 10/10 ✅ | Phase 2: 17/17 ✅_

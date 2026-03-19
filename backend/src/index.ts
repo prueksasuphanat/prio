@@ -1,7 +1,9 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import authRouter from "./modules/auth/auth.router";
 
 dotenv.config();
 
@@ -19,15 +21,35 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// API routes will be added here
+// API routes
+app.use("/api/auth", authRouter);
+
+// Root API endpoint
 app.get("/api", (_req: Request, res: Response) => {
   res.json({ message: "Prio API Server" });
+});
+
+// Global error handler
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Error:", err);
+
+  res.status(500).json({
+    success: false,
+    error: {
+      code: "SERVER_ERROR",
+      message:
+        process.env.NODE_ENV === "production"
+          ? "Internal server error"
+          : err.message,
+    },
+  });
 });
 
 // Start server

@@ -43,37 +43,27 @@ prio/
 
 ## 🛠️ Development Setup
 
-### Prerequisites
+See [docs/SETUP.md](docs/SETUP.md) for detailed setup instructions.
 
-- Node.js 18+ and npm
-- PostgreSQL 14+
-- Git
-
-### Backend Setup
+### Quick Start
 
 ```bash
+# Backend
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your database credentials
 npx prisma migrate dev
-npx prisma db seed
 npm run dev
-```
 
-Backend will run at `http://localhost:3000`
-
-### Frontend Setup
-
-```bash
+# Frontend
 cd frontend
 npm install
-cp .env.example .env
-# Edit .env if needed
 npm run dev
 ```
 
-Frontend will run at `http://localhost:5173`
+- Backend: `http://localhost:3000`
+- Frontend: `http://localhost:5173`
+- Demo login: `demo@prio.app` / `password123`
 
 ## 📚 Documentation
 
@@ -85,6 +75,18 @@ See the `docs/` folder for detailed documentation:
 - [API.md](docs/API.md) — API reference
 - [DATABASE.md](docs/DATABASE.md) — Database schema
 - [DEPLOYMENT.md](docs/DEPLOYMENT.md) — Deployment guide
+- [SETUP.md](docs/SETUP.md) — Setup instructions
+- [Postman Guide](docs/postman/POSTMAN_GUIDE.md) — API testing
+
+**Phase Completion:**
+
+- [Phase 0](docs/phases/PHASE0_COMPLETE.md) — Project Setup ✅
+- [Phase 1](docs/phases/PHASE1_COMPLETE.md) — Database Schema ✅
+- [Phase 2](docs/phases/PHASE2_COMPLETE.md) — Auth API ✅
+
+- [Phase 0 Complete](docs/PHASE0_COMPLETE.md) — Project Setup ✅
+- [Phase 1 Complete](docs/PHASE1_COMPLETE.md) — Database Schema ✅
+- [Phase 2 Complete](docs/PHASE2_COMPLETE.md) — Auth API ✅
 
 ## ✨ Features
 
