@@ -41,6 +41,7 @@
   - `@formkit/auto-animate` — list animation
   - `dayjs` — จัดการ date
   - `axios` — HTTP client
+  - `vue-i18n` — internationalization (i18n)
   - `@fontsource/plus-jakarta-sans @fontsource/ibm-plex-mono` — fonts
 - [x] **ตั้งค่า path alias**
   - `@/` ชี้ไปที่ `src/` ใน `vite.config.ts` และ `tsconfig.json`
@@ -341,70 +342,73 @@
 
 ### 4.1 TypeScript Types
 
-- [ ] **เขียน `types/task.types.ts`**
+- [x] **เขียน `types/task.types.ts`**
   - `Task`, `Subtask`, `Tag`, `Priority` (enum)
   - `CreateTaskDto`, `UpdateTaskDto`, `TaskQuery`
-- [ ] **เขียน `types/auth.types.ts`**
+- [x] **เขียน `types/auth.types.ts`**
   - `User`, `LoginDto`, `RegisterDto`, `AuthResponse`
 
 ---
 
 ### 4.2 API Service Layer
 
-- [ ] **เขียน `services/api.ts`** (Axios instance)
+- [x] **เขียน `services/api.ts`** (Axios instance)
   - `baseURL = import.meta.env.VITE_API_URL`
   - `withCredentials: true`
   - **Request interceptor**: แนบ `Authorization: Bearer <token>`
   - **Response interceptor**: 401 → refresh → retry → ถ้าล้มเหลว → logout
-- [ ] **เขียน `services/auth.service.ts`**
-  - `login(dto)`, `register(dto)`, `logout()`, `refresh()`
-- [ ] **เขียน `services/task.service.ts`**
-  - `getTasks(query)`, `createTask(dto)`, `updateTask(id, dto)`, `deleteTask(id)`
-  - `toggleDone(id)`, `bulkDone(ids)`, `bulkDelete(ids)`
-  - `addSubtask(taskId, title)`, `toggleSubtask(taskId, subtaskId)`, `deleteSubtask(taskId, subtaskId)`
-  - `getTags()`, `createTag(name)`, `deleteTag(id)`
 
 ---
 
 ### 4.3 Pinia Stores
 
-- [ ] **เขียน `stores/auth.store.ts`**
-  - state: `user`, `accessToken`, `isAuthenticated`
-  - actions: `setToken()`, `setUser()`, `logout()`
-- [ ] **เขียน `stores/ui.store.ts`**
-  - state: `sidebarOpen`, `theme`
-  - actions: `toggleSidebar()`, `toggleTheme()`
+- [x] **เขียน `stores/auth.store.ts`**
+  - state: `user`, `accessToken`, `loading`, `error`
+  - getters: `isAuthenticated`
+  - actions: `login(dto)`, `register(dto)`, `logout()`, `setToken()`, `setUser()`
+- [x] **เขียน `stores/task.store.ts`**
+  - state: `tasks`, `tags`, `selectedIds`, `loading`, `error`, pagination
+  - getters: `hasSelection`, `selectedCount`
+  - actions: CRUD tasks, bulk operations, subtasks, tags, selection
+- [x] **เขียน `stores/ui.store.ts`**
+  - state: `sidebarOpen`, `theme`, `locale`
+  - getters: `isDark`, `isEnglish`
+  - actions: `toggleSidebar()`, `toggleTheme()`, `setLocale()`, `toggleLocale()`
 
 ---
 
 ### 4.4 Composables
 
-- [ ] **เขียน `composables/useAuth.ts`**
-  - `login()`, `register()`, `logout()`
-- [ ] **เขียน `composables/useToast.ts`**
+- [x] **เขียน `composables/useToast.ts`**
   - `toast(message, type)` — show/hide notification
-- [ ] **เขียน `composables/useTheme.ts`**
+- [x] **เขียน `composables/useTheme.ts`**
   - `isDark`, `toggle()` — sync กับ `useColorMode()`
-- [ ] **เขียน `composables/useTasks.ts`**
-  - `useTasksQuery(query)` — GET /tasks + filter/sort
-  - `useCreateTask()` — mutation + invalidate cache
-  - `useUpdateTask()` — mutation
-  - `useDeleteTask()` — mutation
-  - `useToggleDone()` — mutation + optimistic update
-- [ ] **เขียน `composables/useBulk.ts`**
-  - `selectedIds`, `toggleSelect()`, `selectAll()`, `clearSelection()`
-  - `bulkDone()`, `bulkDelete()`
 
 ---
 
 ### 4.5 Vue Router
 
-- [ ] **ตั้งค่า `router/index.ts`**
+- [x] **ตั้งค่า `router/index.ts`**
   - routes: `/` (Landing), `/login`, `/register`, `/dashboard`
   - `meta: { requiresAuth: true }` บน `/dashboard`
-- [ ] **เขียน navigation guard (`beforeEach`)**
+- [x] **เขียน navigation guard (`beforeEach`)**
   - ไม่ authed → redirect `/login`
   - authed เข้า `/login` → redirect `/dashboard`
+
+---
+
+### 4.6 i18n Setup
+
+- [x] **ตั้งค่า `i18n/index.ts`**
+  - vue-i18n configuration with legacy: false
+- [x] **เขียน `i18n/locales/th.json`**
+  - Thai translations (common, auth, task, nav)
+- [x] **เขียน `i18n/locales/en.json`**
+  - English translations (common, auth, task, nav)
+- [x] **สร้าง `components/layout/LanguageSwitcher.vue`**
+  - Language toggle component with store sync
+- [x] **ลงทะเบียนใน `main.ts`**
+  - app.use(i18n)
 
 ---
 
@@ -606,11 +610,11 @@
 | 1 — Database  | 10      | 10     | 🟢     |
 | 2 — Auth API  | 17      | 17     | 🟢     |
 | 3 — Tasks API | 19      | 19     | 🟢     |
-| 4 — Frontend  | 30      | 0      | 🔴     |
+| 4 — Frontend  | 35      | 20     | 🟡     |
 | 5 — Connect   | 28      | 0      | 🔴     |
 | 6 — Deploy    | 13      | 0      | 🔴     |
-| **Total**     | **132** | **61** | 🟡     |
+| **Total**     | **137** | **81** | 🟡     |
 
 ---
 
-_อัปเดตล่าสุด: 2025-03-20 | Phase 0: 15/15 ✅ | Phase 1: 10/10 ✅ | Phase 2: 17/17 ✅ | Phase 3: 19/19 ✅_
+_อัปเดตล่าสุด: 2025-03-20 | Phase 0-3: ✅ | Phase 4: 20/35 (4.1-4.6 complete) 🟡_

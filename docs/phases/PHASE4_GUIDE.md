@@ -6,18 +6,17 @@
 
 ## 📋 Overview
 
-Phase 4 จะสร้างโครงสร้างพื้นฐานของ frontend ทั้งหมด โดยแบ่งเป็น 10 ส่วนหลัก:
+Phase 4 จะสร้างโครงสร้างพื้นฐานของ frontend ทั้งหมด โดยแบ่งเป็น 9 ส่วนหลัก:
 
 1. **TypeScript Types** — กำหนด types สำหรับ Task, User, API responses
 2. **API Service Layer** — Axios instance + interceptors
-3. **Pinia Stores** — State management (auth, ui)
-4. **Composables** — Reusable logic (useAuth, useTasks, useToast, useTheme)
+3. **Pinia Stores** — State management + API calls (auth, tasks, ui)
+4. **Composables** — Reusable UI logic (useToast, useTheme)
 5. **Vue Router** — Routes + navigation guards
 6. **Base UI Components** — Button, Input, Modal, Toast
 7. **Layout Components** — Sidebar, TopBar, BottomNav
 8. **Task Components** — TaskCard, SubTaskList, TaskFormModal, etc.
 9. **Views** — Landing, Auth, Dashboard
-10. **Testing** — ทดสอบ Auth flow
 
 ---
 
@@ -25,10 +24,10 @@ Phase 4 จะสร้างโครงสร้างพื้นฐานข
 
 ### หลักการสำคัญ
 
-- **API-First**: ทุก component ต้องเชื่อมกับ API จริง ไม่ใช้ mock data
+- **Store-Based API**: เรียก API ใน store actions โดยตรง
 - **Type Safety**: ใช้ TypeScript อย่างเต็มที่ กำหนด types ชัดเจน
 - **Composition API**: ใช้ `<script setup>` และ Composition API
-- **Reusability**: แยก logic ออกเป็น composables
+- **Separation of Concerns**: แยก business logic (stores) กับ UI logic (composables)
 - **Responsive**: รองรับทั้ง desktop และ mobile
 
 ### ลำดับการทำงานที่แนะนำ
@@ -50,18 +49,19 @@ frontend/src/
 │   ├── auth.types.ts       # User, LoginDto, RegisterDto, AuthResponse
 │   └── task.types.ts       # Task, Subtask, Tag, Priority, DTOs
 ├── services/
-│   ├── api.ts              # Axios instance + interceptors
-│   ├── auth.service.ts     # login, register, logout, refresh
-│   └── task.service.ts     # CRUD tasks, subtasks, tags
+│   └── api.ts              # Axios instance + interceptors
 ├── stores/
-│   ├── auth.store.ts       # user, accessToken, isAuthenticated
-│   └── ui.store.ts         # sidebarOpen, theme
+│   ├── auth.store.ts       # Auth state + API calls (login, register, logout)
+│   ├── task.store.ts       # Task state + API calls (CRUD, bulk operations)
+│   └── ui.store.ts         # UI state (sidebarOpen, theme, locale)
 ├── composables/
-│   ├── useAuth.ts          # Auth logic
 │   ├── useToast.ts         # Toast notifications
-│   ├── useTheme.ts         # Dark/Light mode
-│   ├── useTasks.ts         # Task queries + mutations
-│   └── useBulk.ts          # Bulk selection + actions
+│   └── useTheme.ts         # Dark/Light mode
+├── i18n/
+│   ├── index.ts            # i18n setup
+│   ├── locales/
+│   │   ├── en.json         # English translations
+│   │   └── th.json         # Thai translations
 ├── router/
 │   └── index.ts            # Routes + navigation guards
 ├── components/
@@ -73,7 +73,8 @@ frontend/src/
 │   ├── layout/
 │   │   ├── AppSidebar.vue
 │   │   ├── MobileTopBar.vue
-│   │   └── BottomNav.vue
+│   │   ├── BottomNav.vue
+│   │   └── LanguageSwitcher.vue  # Language toggle component
 │   └── tasks/
 │       ├── TaskCard.vue
 │       ├── SubTaskList.vue
@@ -200,15 +201,16 @@ export interface TaskQuery {
 
 ### 4.2 API Service Layer
 
-**ไฟล์:** `services/api.ts`, `services/auth.service.ts`, `services/task.service.ts`
+**ไฟล์:** `services/api.ts`
 
-**จุดประสงค์:** จัดการการเรียก API ทั้งหมด
+**จุดประสงค์:** สร้าง Axios instance พร้อม interceptors
 
 **api.ts (Axios Instance):**
 
 ```typescript
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth.store";
+import router from "@/router";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -253,6 +255,7 @@ api.interceptors.response.use(
         // Refresh ล้มเหลว → logout
         const authStore = useAuthStore();
         authStore.logout();
+        router.push("/login");
         return Promise.reject(refreshError);
       }
     }
@@ -264,137 +267,28 @@ api.interceptors.response.use(
 export default api;
 ```
 
-**auth.service.ts:**
-
-```typescript
-import api from "./api";
-import type { LoginDto, RegisterDto, AuthResponse } from "@/types/auth.types";
-
-export const authService = {
-  async login(dto: LoginDto): Promise<AuthResponse> {
-    const { data } = await api.post("/auth/login", dto);
-    return data;
-  },
-
-  async register(dto: RegisterDto): Promise<AuthResponse> {
-    const { data } = await api.post("/auth/register", dto);
-    return data;
-  },
-
-  async logout(): Promise<void> {
-    await api.post("/auth/logout");
-  },
-
-  async refresh(): Promise<AuthResponse> {
-    const { data } = await api.post("/auth/refresh");
-    return data;
-  },
-};
-```
-
-**task.service.ts:**
-
-```typescript
-import api from "./api";
-import type {
-  Task,
-  CreateTaskDto,
-  UpdateTaskDto,
-  TaskQuery,
-  Tag,
-} from "@/types/task.types";
-
-export const taskService = {
-  // Tasks
-  async getTasks(query: TaskQuery = {}) {
-    const { data } = await api.get("/tasks", { params: query });
-    return data;
-  },
-
-  async createTask(dto: CreateTaskDto) {
-    const { data } = await api.post("/tasks", dto);
-    return data;
-  },
-
-  async updateTask(id: number, dto: UpdateTaskDto) {
-    const { data } = await api.patch(`/tasks/${id}`, dto);
-    return data;
-  },
-
-  async deleteTask(id: number) {
-    const { data } = await api.delete(`/tasks/${id}`);
-    return data;
-  },
-
-  async toggleDone(id: number) {
-    const { data } = await api.patch(`/tasks/${id}/done`);
-    return data;
-  },
-
-  async bulkDone(taskIds: number[]) {
-    const { data } = await api.patch("/tasks/bulk/done", { taskIds });
-    return data;
-  },
-
-  async bulkDelete(taskIds: number[]) {
-    const { data } = await api.delete("/tasks/bulk", { data: { taskIds } });
-    return data;
-  },
-
-  // Subtasks
-  async addSubtask(taskId: number, title: string) {
-    const { data } = await api.post(`/tasks/${taskId}/subtasks`, { title });
-    return data;
-  },
-
-  async toggleSubtask(taskId: number, subtaskId: number) {
-    const { data } = await api.patch(
-      `/tasks/${taskId}/subtasks/${subtaskId}/done`,
-    );
-    return data;
-  },
-
-  async deleteSubtask(taskId: number, subtaskId: number) {
-    const { data } = await api.delete(`/tasks/${taskId}/subtasks/${subtaskId}`);
-    return data;
-  },
-
-  // Tags
-  async getTags() {
-    const { data } = await api.get("/tags");
-    return data;
-  },
-
-  async createTag(name: string) {
-    const { data } = await api.post("/tags", { name });
-    return data;
-  },
-
-  async deleteTag(id: number) {
-    const { data } = await api.delete(`/tags/${id}`);
-    return data;
-  },
-};
-```
-
 ---
 
 ### 4.3 Pinia Stores
 
 **ไฟล์:** `stores/auth.store.ts`, `stores/ui.store.ts`
 
-**จุดประสงค์:** จัดการ global state
+**จุดประสงค์:** จัดการ global state + API calls
 
 **auth.store.ts:**
 
 ```typescript
 import { defineStore } from "pinia";
-import type { User } from "@/types/auth.types";
+import api from "@/services/api";
+import router from "@/router";
+import type { User, LoginDto, RegisterDto } from "@/types/auth.types";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: null as User | null,
     accessToken: "",
+    loading: false,
+    error: null as string | null,
   }),
 
   getters: {
@@ -410,9 +304,303 @@ export const useAuthStore = defineStore("auth", {
       this.user = userData;
     },
 
-    logout() {
-      this.user = null;
-      this.accessToken = "";
+    async login(dto: LoginDto) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await api.post("/auth/login", dto);
+        this.accessToken = data.data.accessToken;
+        this.user = data.data.user;
+        router.push("/dashboard");
+      } catch (error: any) {
+        this.error = error.response?.data?.error?.message || "Login failed";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async register(dto: RegisterDto) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await api.post("/auth/register", dto);
+        this.accessToken = data.data.accessToken;
+        this.user = data.data.user;
+        router.push("/dashboard");
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Registration failed";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async logout() {
+      try {
+        await api.post("/auth/logout");
+      } catch (error) {
+        console.error("Logout error:", error);
+      } finally {
+        this.user = null;
+        this.accessToken = "";
+        router.push("/login");
+      }
+    },
+  },
+});
+```
+
+**task.store.ts:**
+
+```typescript
+import { defineStore } from "pinia";
+import api from "@/services/api";
+import type {
+  Task,
+  CreateTaskDto,
+  UpdateTaskDto,
+  TaskQuery,
+  Tag,
+} from "@/types/task.types";
+
+export const useTaskStore = defineStore("task", {
+  state: () => ({
+    tasks: [] as Task[],
+    tags: [] as Tag[],
+    selectedIds: [] as number[],
+    loading: false,
+    error: null as string | null,
+    // Pagination
+    currentPage: 1,
+    totalPages: 1,
+    total: 0,
+  }),
+
+  getters: {
+    hasSelection: (state) => state.selectedIds.length > 0,
+    selectedCount: (state) => state.selectedIds.length,
+  },
+
+  actions: {
+    // ==================== TASKS ====================
+    async fetchTasks(query: TaskQuery = {}) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await api.get("/tasks", { params: query });
+        this.tasks = data.data;
+        this.currentPage = data.meta.page;
+        this.totalPages = data.meta.totalPages;
+        this.total = data.meta.total;
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to fetch tasks";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async createTask(dto: CreateTaskDto) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await api.post("/tasks", dto);
+        this.tasks.unshift(data.data.task);
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to create task";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async updateTask(id: number, dto: UpdateTaskDto) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const { data } = await api.patch(`/tasks/${id}`, dto);
+        const index = this.tasks.findIndex((t) => t.id === id);
+        if (index !== -1) {
+          this.tasks[index] = data.data.task;
+        }
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to update task";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async deleteTask(id: number) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await api.delete(`/tasks/${id}`);
+        this.tasks = this.tasks.filter((t) => t.id !== id);
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to delete task";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async toggleDone(id: number) {
+      try {
+        const { data } = await api.patch(`/tasks/${id}/done`);
+        const index = this.tasks.findIndex((t) => t.id === id);
+        if (index !== -1) {
+          this.tasks[index].isDone = data.data.task.isDone;
+        }
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to toggle task";
+        throw error;
+      }
+    },
+
+    async bulkDone() {
+      if (this.selectedIds.length === 0) return;
+      this.loading = true;
+      try {
+        await api.patch("/tasks/bulk/done", { taskIds: this.selectedIds });
+        this.selectedIds.forEach((id) => {
+          const task = this.tasks.find((t) => t.id === id);
+          if (task) task.isDone = true;
+        });
+        this.selectedIds = [];
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message ||
+          "Failed to mark tasks as done";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async bulkDelete() {
+      if (this.selectedIds.length === 0) return;
+      this.loading = true;
+      try {
+        await api.delete("/tasks/bulk", {
+          data: { taskIds: this.selectedIds },
+        });
+        this.tasks = this.tasks.filter((t) => !this.selectedIds.includes(t.id));
+        this.selectedIds = [];
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to delete tasks";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ==================== SUBTASKS ====================
+    async addSubtask(taskId: number, title: string) {
+      try {
+        const { data } = await api.post(`/tasks/${taskId}/subtasks`, { title });
+        const task = this.tasks.find((t) => t.id === taskId);
+        if (task) {
+          task.subtasks.push(data.data.subtask);
+        }
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to add subtask";
+        throw error;
+      }
+    },
+
+    async toggleSubtask(taskId: number, subtaskId: number) {
+      try {
+        const { data } = await api.patch(
+          `/tasks/${taskId}/subtasks/${subtaskId}/done`,
+        );
+        const task = this.tasks.find((t) => t.id === taskId);
+        if (task) {
+          const subtask = task.subtasks.find((s) => s.id === subtaskId);
+          if (subtask) {
+            subtask.isDone = data.data.subtask.isDone;
+          }
+        }
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to toggle subtask";
+        throw error;
+      }
+    },
+
+    async deleteSubtask(taskId: number, subtaskId: number) {
+      try {
+        await api.delete(`/tasks/${taskId}/subtasks/${subtaskId}`);
+        const task = this.tasks.find((t) => t.id === taskId);
+        if (task) {
+          task.subtasks = task.subtasks.filter((s) => s.id !== subtaskId);
+        }
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to delete subtask";
+        throw error;
+      }
+    },
+
+    // ==================== TAGS ====================
+    async fetchTags() {
+      try {
+        const { data } = await api.get("/tags");
+        this.tags = data.data.tags;
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to fetch tags";
+        throw error;
+      }
+    },
+
+    async createTag(name: string) {
+      try {
+        const { data } = await api.post("/tags", { name });
+        this.tags.push(data.data.tag);
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to create tag";
+        throw error;
+      }
+    },
+
+    async deleteTag(id: number) {
+      try {
+        await api.delete(`/tags/${id}`);
+        this.tags = this.tags.filter((t) => t.id !== id);
+      } catch (error: any) {
+        this.error =
+          error.response?.data?.error?.message || "Failed to delete tag";
+        throw error;
+      }
+    },
+
+    // ==================== SELECTION ====================
+    toggleSelect(id: number) {
+      const index = this.selectedIds.indexOf(id);
+      if (index > -1) {
+        this.selectedIds.splice(index, 1);
+      } else {
+        this.selectedIds.push(id);
+      }
+    },
+
+    selectAll() {
+      this.selectedIds = this.tasks.map((t) => t.id);
+    },
+
+    clearSelection() {
+      this.selectedIds = [];
     },
   },
 });
@@ -427,10 +615,12 @@ export const useUiStore = defineStore("ui", {
   state: () => ({
     sidebarOpen: true,
     theme: "light" as "light" | "dark",
+    locale: "th" as "th" | "en",
   }),
 
   getters: {
     isDark: (state) => state.theme === "dark",
+    isEnglish: (state) => state.locale === "en",
   },
 
   actions: {
@@ -445,160 +635,197 @@ export const useUiStore = defineStore("ui", {
     setTheme(newTheme: "light" | "dark") {
       this.theme = newTheme;
     },
+
+    setLocale(newLocale: "th" | "en") {
+      this.locale = newLocale;
+    },
+
+    toggleLocale() {
+      this.locale = this.locale === "th" ? "en" : "th";
+    },
   },
 });
 ```
 
 ---
 
+### 4.3.1 i18n Setup (เพิ่มเติม)
+
+**ไฟล์:** `i18n/index.ts`, `i18n/locales/th.json`, `i18n/locales/en.json`
+
+**จุดประสงค์:** ตั้งค่า internationalization (i18n) สำหรับเปลี่ยนภาษา
+
+**ติดตั้ง:**
+
+```bash
+npm install vue-i18n
+```
+
+**i18n/index.ts:**
+
+```typescript
+import { createI18n } from "vue-i18n";
+import th from "./locales/th.json";
+import en from "./locales/en.json";
+
+const i18n = createI18n({
+  legacy: false, // ใช้ Composition API
+  locale: "th", // ภาษาเริ่มต้น
+  fallbackLocale: "en",
+  messages: {
+    th,
+    en,
+  },
+});
+
+export default i18n;
+```
+
+**i18n/locales/th.json:**
+
+```json
+{
+  "common": {
+    "appName": "Prio",
+    "loading": "กำลังโหลด...",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "search": "ค้นหา"
+  },
+  "auth": {
+    "login": "เข้าสู่ระบบ",
+    "register": "สมัครสมาชิก",
+    "logout": "ออกจากระบบ",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อ"
+  },
+  "task": {
+    "title": "งาน",
+    "addTask": "เพิ่มงาน",
+    "editTask": "แก้ไขงาน",
+    "deleteTask": "ลบงาน",
+    "priority": "ความสำคัญ",
+    "dueDate": "กำหนดส่ง",
+    "description": "รายละเอียด"
+  }
+}
+```
+
+**i18n/locales/en.json:**
+
+```json
+{
+  "common": {
+    "appName": "Prio",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name"
+  },
+  "task": {
+    "title": "Tasks",
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task",
+    "priority": "Priority",
+    "dueDate": "Due Date",
+    "description": "Description"
+  }
+}
+```
+
+**ลงทะเบียนใน main.ts:**
+
+```typescript
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import App from "./App.vue";
+import router from "./router";
+import i18n from "./i18n";
+
+const app = createApp(App);
+
+app.use(createPinia());
+app.use(router);
+app.use(i18n);
+
+app.mount("#app");
+```
+
+**วิธีใช้ใน component:**
+
+```vue
+<script setup lang="ts">
+import { useI18n } from "vue-i18n";
+
+const { t, locale } = useI18n();
+
+function changeLanguage(lang: "th" | "en") {
+  locale.value = lang;
+}
+</script>
+
+<template>
+  <div>
+    <h1>{{ t("common.appName") }}</h1>
+    <button @click="changeLanguage('th')">ไทย</button>
+    <button @click="changeLanguage('en')">English</button>
+  </div>
+</template>
+```
+
+**LanguageSwitcher.vue component:**
+
+```vue
+<script setup lang="ts">
+import { useI18n } from "vue-i18n";
+import { useUiStore } from "@/stores/ui.store";
+import { watch } from "vue";
+
+const { locale } = useI18n();
+const uiStore = useUiStore();
+
+// Sync i18n locale กับ store
+watch(
+  () => uiStore.locale,
+  (newLocale) => {
+    locale.value = newLocale;
+  },
+  { immediate: true },
+);
+
+function toggleLanguage() {
+  uiStore.toggleLocale();
+}
+</script>
+
+<template>
+  <button @click="toggleLanguage" class="language-switcher">
+    {{ uiStore.locale === "th" ? "🇹🇭 TH" : "🇬🇧 EN" }}
+  </button>
+</template>
+```
+
+---
+
 ### 4.4 Composables
 
-**ไฟล์:** `composables/useAuth.ts`, `composables/useTasks.ts`, `composables/useToast.ts`, `composables/useTheme.ts`, `composables/useBulk.ts`
+**ไฟล์:** `composables/useToast.ts`, `composables/useTheme.ts`
 
-**จุดประสงค์:** แยก reusable logic ออกจาก components
-
-**useAuth.ts:**
-
-```typescript
-import { useAuthStore } from "@/stores/auth.store";
-import { authService } from "@/services/auth.service";
-import { useRouter } from "vue-router";
-import type { LoginDto, RegisterDto } from "@/types/auth.types";
-
-export function useAuth() {
-  const authStore = useAuthStore();
-  const router = useRouter();
-
-  async function login(dto: LoginDto) {
-    try {
-      const response = await authService.login(dto);
-      authStore.setToken(response.data.accessToken);
-      authStore.setUser(response.data.user);
-      router.push("/dashboard");
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async function register(dto: RegisterDto) {
-    try {
-      const response = await authService.register(dto);
-      authStore.setToken(response.data.accessToken);
-      authStore.setUser(response.data.user);
-      router.push("/dashboard");
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async function logout() {
-    try {
-      await authService.logout();
-      authStore.logout();
-      router.push("/login");
-    } catch (error) {
-      // Logout ฝั่ง client ต่อไปเลย
-      authStore.logout();
-      router.push("/login");
-    }
-  }
-
-  return {
-    login,
-    register,
-    logout,
-  };
-}
-```
-
-**useTasks.ts (ใช้ @tanstack/vue-query):**
-
-```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
-import { taskService } from "@/services/task.service";
-import type {
-  TaskQuery,
-  CreateTaskDto,
-  UpdateTaskDto,
-} from "@/types/task.types";
-
-export function useTasks(query: TaskQuery = {}) {
-  const queryClient = useQueryClient();
-
-  // Query: ดึง tasks
-  const tasksQuery = useQuery({
-    queryKey: ["tasks", query],
-    queryFn: () => taskService.getTasks(query),
-  });
-
-  // Mutation: สร้าง task
-  const createTask = useMutation({
-    mutationFn: (dto: CreateTaskDto) => taskService.createTask(dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  // Mutation: อัปเดต task
-  const updateTask = useMutation({
-    mutationFn: ({ id, dto }: { id: number; dto: UpdateTaskDto }) =>
-      taskService.updateTask(id, dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  // Mutation: ลบ task
-  const deleteTask = useMutation({
-    mutationFn: (id: number) => taskService.deleteTask(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  // Mutation: toggle done (with optimistic update)
-  const toggleDone = useMutation({
-    mutationFn: (id: number) => taskService.toggleDone(id),
-    onMutate: async (id) => {
-      // Cancel outgoing queries
-      await queryClient.cancelQueries({ queryKey: ["tasks"] });
-
-      // Snapshot previous value
-      const previousTasks = queryClient.getQueryData(["tasks", query]);
-
-      // Optimistically update
-      queryClient.setQueryData(["tasks", query], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          data: old.data.map((task: any) =>
-            task.id === id ? { ...task, isDone: !task.isDone } : task,
-          ),
-        };
-      });
-
-      return { previousTasks };
-    },
-    onError: (err, id, context) => {
-      // Rollback on error
-      queryClient.setQueryData(["tasks", query], context?.previousTasks);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  return {
-    tasks: tasksQuery.data,
-    isLoading: tasksQuery.isLoading,
-    error: tasksQuery.error,
-    createTask,
-    updateTask,
-    deleteTask,
-    toggleDone,
-  };
-}
-```
+**จุดประสงค์:** แยก reusable UI logic ออกจาก components (API calls อยู่ใน stores แล้ว)
 
 **useToast.ts:**
 
@@ -660,7 +887,7 @@ export function useToast() {
 ```typescript
 import { useColorMode } from "@vueuse/core";
 import { useUiStore } from "@/stores/ui.store";
-import { watch } from "vue";
+import { watch, computed } from "vue";
 
 export function useTheme() {
   const uiStore = useUiStore();
@@ -686,60 +913,17 @@ export function useTheme() {
 }
 ```
 
-**useBulk.ts:**
-
-```typescript
-import { ref } from "vue";
-import { useMutation, useQueryClient } from "@tanstack/vue-query";
-import { taskService } from "@/services/task.service";
-
-export function useBulk() {
-  const queryClient = useQueryClient();
-  const selectedIds = ref<number[]>([]);
-
-  function toggleSelect(id: number) {
-    const index = selectedIds.value.indexOf(id);
-    if (index > -1) {
-      selectedIds.value.splice(index, 1);
-    } else {
-      selectedIds.value.push(id);
-    }
-  }
-
-  function selectAll(ids: number[]) {
-    selectedIds.value = [...ids];
-  }
-
-  function clearSelection() {
-    selectedIds.value = [];
-  }
-
-  const bulkDone = useMutation({
-    mutationFn: () => taskService.bulkDone(selectedIds.value),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      clearSelection();
-    },
-  });
-
-  const bulkDelete = useMutation({
-    mutationFn: () => taskService.bulkDelete(selectedIds.value),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      clearSelection();
-    },
-  });
-
-  return {
-    selectedIds,
-    toggleSelect,
-    selectAll,
-    clearSelection,
-    bulkDone,
-    bulkDelete,
-  };
+return {
+selectedIds,
+toggleSelect,
+selectAll,
+clearSelection,
+bulkDone,
+bulkDelete,
+};
 }
-```
+
+````
 
 ---
 
@@ -800,7 +984,7 @@ router.beforeEach((to, from, next) => {
 });
 
 export default router;
-```
+````
 
 ---
 

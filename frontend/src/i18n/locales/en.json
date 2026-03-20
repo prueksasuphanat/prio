@@ -1,0 +1,54 @@
+{
+  "common": {
+    "appName": "Prio",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Registration successful",
+    "logoutSuccess": "Logout successful"
+  },
+  "task": {
+    "title": "Tasks",
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task",
+    "priority": "Priority",
+    "dueDate": "Due Date",
+    "description": "Description",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "all": "All",
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "overdue": "Overdue",
+    "done": "Done",
+    "pending": "Pending",
+    "subtasks": "Subtasks",
+    "tags": "Tags",
+    "createSuccess": "Task created successfully",
+    "updateSuccess": "Task updated successfully",
+    "deleteSuccess": "Task deleted successfully",
+    "bulkDoneSuccess": "Tasks marked as done",
+    "bulkDeleteSuccess": "Selected tasks deleted"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "profile": "Profile"
+  }
+}

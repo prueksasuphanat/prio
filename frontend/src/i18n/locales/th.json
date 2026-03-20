@@ -1,0 +1,54 @@
+{
+  "common": {
+    "appName": "Prio",
+    "loading": "กำลังโหลด...",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "search": "ค้นหา",
+    "confirm": "ยืนยัน",
+    "close": "ปิด"
+  },
+  "auth": {
+    "login": "เข้าสู่ระบบ",
+    "register": "สมัครสมาชิก",
+    "logout": "ออกจากระบบ",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "name": "ชื่อ",
+    "loginSuccess": "เข้าสู่ระบบสำเร็จ",
+    "registerSuccess": "สมัครสมาชิกสำเร็จ",
+    "logoutSuccess": "ออกจากระบบสำเร็จ"
+  },
+  "task": {
+    "title": "งาน",
+    "addTask": "เพิ่มงาน",
+    "editTask": "แก้ไขงาน",
+    "deleteTask": "ลบงาน",
+    "priority": "ความสำคัญ",
+    "dueDate": "กำหนดส่ง",
+    "description": "รายละเอียด",
+    "high": "สูง",
+    "medium": "ปานกลาง",
+    "low": "ต่ำ",
+    "all": "ทั้งหมด",
+    "today": "วันนี้",
+    "upcoming": "กำลังจะถึง",
+    "overdue": "เกินกำหนด",
+    "done": "เสร็จแล้ว",
+    "pending": "ค้างอยู่",
+    "subtasks": "งานย่อย",
+    "tags": "แท็ก",
+    "createSuccess": "เพิ่มงานใหม่แล้ว",
+    "updateSuccess": "อัปเดตงานแล้ว",
+    "deleteSuccess": "ลบงานแล้ว",
+    "bulkDoneSuccess": "ทำเครื่องหมายเสร็จแล้ว",
+    "bulkDeleteSuccess": "ลบงานที่เลือกแล้ว"
+  },
+  "nav": {
+    "home": "หน้าแรก",
+    "dashboard": "แดชบอร์ด",
+    "profile": "โปรไฟล์"
+  }
+}
